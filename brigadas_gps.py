@@ -1,5 +1,5 @@
 # --------------------------------------
-# Flask App: Rastreo de brigadas con Telegram + Supabase + ngrok-ready
+# Flask App: Rastreo de brigadas (Telegram + Supabase + Render-ready)
 # --------------------------------------
 import os
 from flask import Flask, request, jsonify, render_template
@@ -28,6 +28,7 @@ TELEGRAM_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 @app.route("/webhook/telegram", methods=["POST"])
 def telegram_webhook():
     data = request.get_json()
+    print("[Webhook] Recibido:", data)
 
     try:
         message = data.get("message", {})
@@ -36,7 +37,7 @@ def telegram_webhook():
         location = message.get("location")
 
         if location:
-            # Buscar datos del técnico en otra tabla
+            # Buscar datos del técnico por user_id (Telegram ID, no teléfono)
             perfil = supabase.table("tecnicos_telegram").select("*").eq("telefono", str(user_id)).execute()
             if perfil.data:
                 info = perfil.data[0]
@@ -58,18 +59,18 @@ def telegram_webhook():
                 "timestamp": datetime.now(timezone.utc).isoformat()
             }).execute()
 
-            print(f"[+] Ubicación recibida de {username}: {location['latitude']}, {location['longitude']}")
+            print(f"[+] Ubicación recibida de @{username}: {location['latitude']}, {location['longitude']}")
             return jsonify({"ok": True})
 
     except Exception as e:
-        print(f"[!] Error: {e}")
+        print(f"[!] Error en webhook: {e}")
         return jsonify({"ok": False, "error": str(e)}), 400
 
     return jsonify({"ok": True, "message": "Sin ubicación"}), 200
 
 
 # -------------------------
-# API para mostrar ubicaciones en el mapa (últimos 10 minutos)
+# API para mostrar ubicaciones activas (últimos 10 min)
 # -------------------------
 @app.route("/api/ubicaciones")
 def get_ubicaciones():
@@ -84,30 +85,31 @@ def get_ubicaciones():
 
     data = response.data or []
 
-    # Filtrar solo última ubicación por teléfono
+    # Filtrar última ubicación por técnico (telefono)
     vistos = {}
     for row in data:
         key = row.get("telefono")
         if key not in vistos:
             ts = datetime.fromisoformat(row["timestamp"])
-            diff = now - ts
-            row["minutos_transcurridos"] = round(diff.total_seconds() / 60)
-            row["estado"] = "activo" if row["minutos_transcurridos"] <= 30 else "inactivo"
+            minutos = round((now - ts).total_seconds() / 60)
+            row["minutos_transcurridos"] = minutos
+            row["estado"] = "activo" if minutos <= 30 else "inactivo"
             vistos[key] = row
 
     return jsonify(list(vistos.values()))
 
 
 # -------------------------
-# Registrar Webhook en Telegram (solo si usas ngrok u hosting)
+# Registrar Webhook en Telegram
 # -------------------------
 @app.route("/registrar_webhook")
 def registrar_webhook():
-    dominio = os.getenv("PUBLIC_URL") or "https://tudominio.com"
+    dominio = os.getenv("PUBLIC_URL") or "https://monitoreo-gps.onrender.com"
     url_webhook = f"{dominio}/webhook/telegram"
     url_set = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/setWebhook"
 
     r = requests.post(url_set, data={"url": url_webhook})
+    print("[+] Webhook registrado:", url_webhook)
     return jsonify(r.json())
 
 
@@ -120,9 +122,9 @@ def index():
 
 
 # -------------------------
-# Main
+# Main (local debug solo)
 # -------------------------
 if __name__ == '__main__':
-    print("SUPABASE_URL:", SUPABASE_URL)
-    print("SUPABASE_API_KEY presente:", bool(SUPABASE_KEY))
+    print("🌐 SUPABASE_URL:", SUPABASE_URL)
+    print("🔐 SUPABASE_API_KEY presente:", bool(SUPABASE_KEY))
     app.run(debug=True)
