@@ -1,0 +1,499 @@
+{% extends "layout.html" %}
+{% block title %}Estadísticas{% endblock %}
+
+{% block content %}
+<h1 class="titulo ps-3">Estadísticas</h1>
+
+
+
+<!-- Filtros -->
+<div class="card mb-3">
+  <div class="card-body">
+    <div class="row g-3 align-items-end">
+      <div class="col-md-3">
+        <label class="form-label">Desde</label>
+        <input type="date" id="f-desde" class="form-control">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Hasta</label>
+        <input type="date" id="f-hasta" class="form-control">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Zona</label>
+        <select id="f-zona" class="form-select">
+          <option value="">Todas</option>
+          {% for z in zonas %}
+            <option value="{{ z }}">{{ z }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+
+
+      <div class="col-md-3 d-flex gap-2">
+        <button id="btn-aplicar" class="btn btn-primary flex-grow-1">Aplicar</button>
+        <button id="btn-limpiar" class="btn btn-outline-secondary">Limpiar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+<!-- KPIs -->
+<div class="row g-3 mb-3">
+  <div class="col-md-4">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <div class="text-muted small">Averías Totales</div>
+        <div id="kpi-total" class="display-5 fw-bold">—</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <div class="text-muted small">En Proceso</div>
+        <div id="kpi-proceso" class="display-5 fw-bold">—</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <div class="text-muted small">Finalizadas</div>
+        <div id="kpi-final" class="display-5 fw-bold">—</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Charts -->
+<div class="row g-3">
+  <div class="col-lg-6">
+    <div class="card h-100 shadow-sm">
+      <div class="card-header fw-semibold">Averías por Brigada</div>
+      <div class="card-body"><canvas id="chBrigada"></canvas></div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card h-100 shadow-sm">
+      <div class="card-header fw-semibold">Averías por Red</div>
+      <div class="card-body"><canvas id="chRed"></canvas></div>
+    </div>
+  </div>
+
+    <div class="col-lg-6">   <!-- en vez de col-lg-12 -->
+    <div class="card h-100 shadow-sm">
+        <div class="card-header fw-semibold">Averías por Tipo de Red (mensual)</div>
+        <div class="card-body">
+        <canvas id="chRedMes" style="height: 350px;"></canvas>
+        </div>
+    </div>
+    </div>
+
+    <div class="col-lg-6">
+    <div class="card h-100 shadow-sm">
+        <div class="card-header fw-semibold">Averías por Zona (apilado)</div>
+        <div class="card-body">
+        <canvas id="chZona" style="height: 350px;"></canvas>
+        </div>
+    </div>
+    </div>
+
+
+    <div class="col-lg-12">
+    <div class="card h-100 shadow-sm">
+        <div class="card-header fw-semibold">Averías por Mes</div>
+        <div class="card-body"><canvas id="chMes"></canvas></div>
+    </div>
+    </div>
+
+
+
+
+
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <script>
+    let chBrigada, chRed, chMes, chZona, chRedMes;
+
+    function destroyIf(chart){ if(chart){ chart.destroy(); } }
+
+    // --- SOLO para "Averías por Brigada" ---
+    function buildBrigadaBar(ctx, labels, values){
+        const maxVal   = Math.max(0, ...values);
+        const headroom = (maxVal < 5) ? 1 : Math.ceil(maxVal * 0.10);
+
+        return new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [{
+                label: 'Averías',
+                data: values,
+                backgroundColor: '#468edb',
+                borderColor: '#2a72b8',
+                borderWidth: 1,
+                // un grosor cómodo para brigadas
+                maxBarThickness: 60
+                }]
+            },
+
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    // ✅ una sola etiqueta por barra (el total)
+                    datalabels: {
+                        display: true,
+                        anchor: 'end',
+                        align: 'top',
+                        offset: 6,
+                        clamp: true,
+                        color: '#111',
+                        font: { weight: '700' },
+                        formatter: v => v
+                    },
+                    totals: { enabled: false }  
+
+                },
+
+                scales: {
+                x: {
+                    // barras un poco más anchas, sin afectar otras gráficas
+                    barPercentage: 0.75,
+                    categoryPercentage: 0.85,
+                    ticks: { autoSkip: false }
+                },
+                y: {
+                    beginAtZero: true,
+                    suggestedMax: maxVal + headroom,
+                    ticks: { precision: 0 }
+                }
+                }
+            }
+        });
+    }
+
+
+
+    function buildBar(ctx, labels, values, title){
+    // margen dinámico arriba para que quepa la etiqueta del valor máximo
+    const maxVal   = Math.max(0, ...values);
+    const headroom = (maxVal < 5) ? 1 : Math.ceil(maxVal * 0.10); // +10% o +1
+
+    return new Chart(ctx, {
+        type: 'bar',
+        data: { labels, 
+                datasets: [{ 
+                label: title,
+                data: values,
+                backgroundColor: '#468edb',   // 🔵 Color de las barras
+                borderColor: '#0056b3',      // 🔵 Borde más oscuro
+                borderWidth: 1
+                
+                }] 
+
+                },
+        options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false },
+            datalabels: {
+            anchor: 'end',
+            align: 'top',
+            offset: 4,
+            clamp: true,           // asegura que el texto quede dentro del área
+            color: '#111',
+            font: { weight: '700' },
+            formatter: v => v
+            }
+        },
+        scales: {
+            y: {
+            beginAtZero: true,
+            suggestedMax: maxVal + headroom, // margen arriba
+            ticks: { precision: 0 }
+            }
+        }
+        }
+    });
+    }
+
+
+    function buildDoughnut(ctx, labels, values){
+    return new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+        labels,
+        datasets: [{
+            data: values,
+            borderWidth: 2
+        }]
+        },
+        options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '60%',
+        plugins: {
+            legend: { position: 'top' },
+            datalabels: {
+            color: '#000',                // texto blanco
+            textStrokeColor: '#fff',      // borde negro
+            textStrokeWidth: 1,           // grosor del borde
+            font: { weight: 'bold', size: 14 },
+            formatter: (value, ctx) => {
+                const total = ctx.chart.data.datasets[0].data
+                .reduce((a, b) => a + b, 0);
+                const pct = total ? ((value / total) * 100).toFixed(1) + '%' : '0%';
+                return `${value} (${pct})`;
+            }
+            }
+        }
+        }
+    });
+    }
+
+    function buildLine(ctx, labels, values){
+    return new Chart(ctx, {
+        type: 'line',
+        data: { labels, datasets: [{ label: 'Averías', data: values, tension: 0, fill: false, stepped: false }] },
+        options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: { y: { beginAtZero: true } }
+        }
+    });
+    }
+
+    function buildStackedBar(ctx, labels, serie1, serie2){
+        return new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [
+            {
+                label: 'En Proceso',
+                data: serie1,
+                stack: 'estado',
+                backgroundColor: 'rgba(240, 189, 96, 0.9)',  // naranja con leve transparencia
+                borderColor: '#e3a445',
+                borderWidth: 1,
+                maxBarThickness: 90
+            },
+            {
+                label: 'Finalizado',
+                data: serie2,
+                stack: 'estado',
+                backgroundColor: 'rgba(70, 142, 219, 0.9)', // azul con leve transparencia
+                borderColor: '#2a72b8',
+                borderWidth: 1,
+                maxBarThickness: 90
+            },
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: { padding: { left: 12, right: 16 } }, // aire lateral (evita cortes)
+            plugins: {
+            legend: { position: 'top' },
+
+            // Etiquetas dentro de los bloques (se ocultan si v=0)
+            datalabels: {
+                formatter: (v) => v > 0 ? v : '',       // 👈 oculta los ceros
+                anchor: 'center',
+                align: 'center',
+                color: '#fff',
+                textStrokeColor: 'rgba(0,0,0,.55)',     // borde para contraste
+                textStrokeWidth: 3,
+                font: { weight: '700', size: 12 },
+                clip: true
+            },
+
+            // activamos nuestro plugin de totales (ya registrado)
+            totals: {
+                enabled: true
+            }
+            },
+            scales: {
+            x: {
+                stacked: true,
+                offset: true,              // margen extra a los extremos
+                ticks: { autoSkip: false },
+                barPercentage: 0.8,
+                categoryPercentage: 0.9
+            },
+            y: {
+                stacked: true,
+                beginAtZero: true,
+                ticks: { precision: 0 }
+            }
+            }
+        }
+        });
+    }
+
+
+    function buildMultiLine(ctx, labels, datasets){
+        // Chart.js usará colores por defecto; solo fijamos estilo común
+        const ds = datasets.map(d => ({
+        label: d.label,
+        data: d.data,
+        tension: 0.2,
+        fill: false,
+        pointRadius: 4
+        }));
+        return new Chart(ctx, {
+        type: 'line',
+        data: { labels, datasets: ds },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { y: { beginAtZero: true } },
+            plugins: { legend: { position: 'top' } }
+        }
+        });
+    }
+
+    async function cargar(){
+        const p = new URLSearchParams();
+        const d = document.getElementById('f-desde').value;
+        const h = document.getElementById('f-hasta').value;
+        const z = document.getElementById('f-zona').value;
+
+        if(d) p.set('desde', d);
+        if(h) p.set('hasta', h);
+        if(z) p.set('zona', z);
+
+
+        const res = await fetch('/api/estadisticas?' + p.toString());
+        const js = await res.json();
+
+        // KPIs
+        document.getElementById('kpi-total').textContent   = js.kpi.total;
+        document.getElementById('kpi-proceso').textContent = js.kpi.proceso;
+        document.getElementById('kpi-final').textContent   = js.kpi.finalizado;
+
+        // Brigada
+        const bLabels = Object.keys(js.por_brigada);
+        const bVals   = bLabels.map(k => js.por_brigada[k]);
+        destroyIf(chBrigada);
+        chBrigada = buildBrigadaBar(document.getElementById('chBrigada'), bLabels, bVals);
+
+        // Red
+        const rLabels = Object.keys(js.por_red);
+        const rVals   = rLabels.map(k => js.por_red[k]);
+        destroyIf(chRed);
+        chRed = buildDoughnut(document.getElementById('chRed'), rLabels, rVals);
+
+        // Periodo (dia/semana/mes)
+        const mLabels = Object.keys(js.por_periodo);
+        const mVals   = mLabels.map(k => js.por_periodo[k]);
+
+
+        destroyIf(chMes);
+        // Después (barras):
+        chMes = buildBar(document.getElementById('chMes'), mLabels, mVals, 'Averías');
+
+        // Zona apilado
+        const zLabels = Object.keys(js.por_zona);
+        const serieProc = zLabels.map(k => js.por_zona[k]["En Proceso"] || 0);
+        const serieFin  = zLabels.map(k => js.por_zona[k]["Finalizado"] || 0);
+        destroyIf(chZona);
+        chZona = buildStackedBar(document.getElementById('chZona'), zLabels, serieProc, serieFin);
+
+
+        // ... ya armaste p con los filtros (desde, hasta, zona)
+        const resMes = await fetch('/api/averias_por_mes?' + p.toString());
+        const jm = await resMes.json();
+
+        destroyIf(chMes);
+        chMes = buildBar(document.getElementById('chMes'), jm.labels, jm.values, 'Averías');
+
+
+        // Red por MES (líneas)
+        const resRPM = await fetch('/api/red_por_mes?' + p.toString());
+        const rpm = await resRPM.json();
+        destroyIf(chRedMes);
+        chRedMes = buildMultiLine(
+        document.getElementById('chRedMes'),
+        rpm.labels,
+        rpm.datasets
+        );
+
+
+
+    }
+
+    document.getElementById('btn-aplicar').addEventListener('click', cargar);
+    document.getElementById('btn-limpiar').addEventListener('click', () => {
+        document.getElementById('f-desde').value = '';
+        document.getElementById('f-hasta').value = '';
+        document.getElementById('f-zona').value  = '';
+        cargar();
+    });
+
+    // Primera carga
+    cargar();
+  </script>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+    <script>
+    Chart.register(ChartDataLabels);
+
+
+  // Plugin para escribir el TOTAL arriba de cada barra apilada
+    const totalsPlugin = {
+    id: 'totals',
+    afterDatasetsDraw(chart) {
+        // 👉 solo corre si está explícitamente habilitado en las opciones
+        const cfg = chart.options?.plugins?.totals;
+        if (!cfg || cfg.enabled !== true) return;
+
+        const { ctx, data } = chart;
+        const metas = chart._metasets || chart.getSortedVisibleDatasetMetas?.() || [];
+        if (!metas.length) return;
+
+        data.labels.forEach((_, i) => {
+        const total = data.datasets.reduce((s, ds) => s + (+((ds.data||[])[i] || 0)), 0);
+        if (!total) return;
+
+        const bar0   = metas[0].data[i];
+        const barTop = metas[metas.length - 1].data[i];
+
+        const x = bar0?.x ?? 0;
+        const y = (barTop?.y ?? 0) - 6;
+
+        ctx.save();
+        ctx.fillStyle = '#333';
+        ctx.font = '700 12px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText(total, x, y);
+        ctx.restore();
+        });
+    }
+    };
+    Chart.register(totalsPlugin);
+        
+
+    </script>
+
+
+
+{% endblock %}

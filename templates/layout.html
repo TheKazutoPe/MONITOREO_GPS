@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{% block title %}Monitoreo Bitácoras{% endblock %}</title>
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Tus estilos -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+  <!-- Iconos opcionales -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+
+</head>
+
+
+
+<body>
+
+  <!-- Barra superior con botón hamburguesa visible en móvil -->
+  <nav class="navbar bg-white border-bottom sticky-top px-3">
+    <button class="toggle-btn d-lg-none btn btn-outline-secondary" type="button" aria-label="Menú">
+      <i class="bi bi-list fs-4"></i>
+    </button>
+    <span class="ms-2 fw-semibold">Plataforma de Monitoreo</span>
+  </nav>
+
+  <!-- Contenedor app -->
+  <div class="app-wrapper d-flex">
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="sidebar">
+      <div class="text-center mb-4 py-4 border-bottom">
+        <img src="{{ url_for('static', filename='img/logo.png') }}" alt="logo" width="180">
+        <h6 class="mt-3 fw-bold text-white">PLATAFORMA DE MONITOREO<br><small>Inds. SamFidtronics</small></h6>
+      </div>
+
+
+        <ul class="nav flex-column px-2">
+        {# Averías en Proceso -> / y /zona/<zona> #}
+        <li class="nav-item mb-2">
+            <a
+            class="nav-link side-link fw-semibold {{ 'bg-white text-dark' if request.endpoint in ['index','index_zona'] else 'text-white' }}"
+            href="{{ url_for('index') }}"
+            >Averias en Proceso</a>
+        </li>
+
+        {# Averías Finalizadas -> /finalizadas y /finalizadas/zona/<zona> #}
+        <li class="nav-item mb-2">
+            <a
+            class="nav-link side-link fw-semibold {{ 'bg-white text-dark' if request.endpoint in ['finalizadas','finalizadas_zona'] else 'text-white' }}"
+            href="{{ url_for('finalizadas') }}"
+            >Averias Finalizadas</a>
+        </li>
+
+        {# Estadísticas -> /estadisticas #}
+        <li class="nav-item mb-2">
+            <a
+            class="nav-link side-link fw-semibold {{ 'bg-white text-dark' if request.path.startswith('/estadisticas') else 'text-white' }}"
+            href="{{ url_for('estadisticas') }}"
+            >Estadisticas</a>
+        </li>
+
+        {# Mapa de Averías (ajusta el endpoint si tienes ruta propia) #}
+        <li class="nav-item mb-2">
+        <a class="nav-link side-link fw-semibold {{ 'bg-white text-dark' if request.path.startswith('/mapa') else 'text-white' }}"
+            href="{{ url_for('mapa') }}">
+            Mapa de Averías
+        </a>
+        </li>
+         <li class="nav-item mb-2">
+  <a class="nav-link side-link fw-semibold {{ 'bg-white text-dark' if request.endpoint == 'soporte_ia' else 'text-white' }}"
+     href="{{ url_for('soporte_ia') }}">
+     <i class="bi bi-robot"></i> Soporte IA
+  </a>
+</li>
+
+                <br><br>
+
+        {% if current_user.is_authenticated and current_user.role == 'admin' %}
+            <li class="nav-item mb-1">
+                <a class="nav-link side-link text-white fw-semibold" href="{{ url_for('admin_dashboard') }}">
+                    <i class="bi bi-gear"></i> Administración
+                </a>
+            </li>
+        {% endif %}
+
+        {% if current_user.is_authenticated %}
+        <div class="text-center my-3 px-3">
+        <form method="post" action="{{ url_for('logout') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-danger btn-sm">
+            <i class="bi bi-box-arrow-right me-1"></i> Cerrar sesión
+            </button>
+        </form>
+        </div>
+        {% endif %}
+
+
+
+
+        </ul>
+
+
+    </aside>
+
+    <!-- Backdrop para móvil -->
+    <div id="backdrop" class="app-backdrop"></div>
+
+    <!-- Contenido principal -->
+    <main class="content flex-grow-1">
+      <div class="container-fluid py-3">
+        {% block content %}{% endblock %}
+      </div>
+    </main>
+  </div>
+
+  <!-- Bootstrap JS bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Toggle sidebar -->
+  <script>
+    const btn = document.querySelector('.toggle-btn');
+    const sidebar = document.getElementById('sidebar');
+    const backdrop = document.getElementById('backdrop');
+    const content = document.querySelector('.content');
+
+    function openSidebar() {
+      sidebar.classList.add('open');
+      backdrop.classList.add('show');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeSidebar() {
+      sidebar.classList.remove('open');
+      backdrop.classList.remove('show');
+      document.body.style.overflow = '';
+    }
+
+    btn?.addEventListener('click', () => {
+      if (sidebar.classList.contains('open')) { closeSidebar(); } else { openSidebar(); }
+    });
+    backdrop.addEventListener('click', closeSidebar);
+
+    // En escritorio, asegúrate de que no quede el overlay activo
+    const mq = window.matchMedia('(min-width: 992px)');
+    function handleMQ(e){ if(e.matches){ closeSidebar(); } }
+    mq.addEventListener('change', handleMQ);
+    handleMQ(mq);
+  </script>
+
+    {% block scripts %}{% endblock %}
+
+  <script>
+  (function(){
+    // solo si hay usuario logueado (puedes inyectar una bandera desde Jinja)
+    {% if current_user.is_authenticated %}
+    const check = async () => {
+      try {
+        const r = await fetch('/api/session/ping', {cache:'no-store'});
+        const j = await r.json();
+        if (j.revoked) {
+          alert("Se inició sesión en otro dispositivo. Esta sesión se cerrará.");
+          // opcional: llamar a logout POST
+          const f = new FormData(); f.append('dummy','1');
+          fetch('/logout', {method: 'POST', body: f}).finally(()=> location.href = "{{ url_for('login') }}");
+        }
+      } catch(e) {}
+    };
+    setInterval(check, 30000); // cada 30s
+    {% endif %}
+  })();
+  </script>
+
+</body>
+</html>

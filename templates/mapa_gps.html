@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Rastreo de Brigadas – InsightPy</title>
+  <meta charset="utf-8" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    body { margin: 0; font-family: sans-serif; }
+    h2 { margin: 0; padding: 10px; background: #2c3e50; color: white; }
+    #map { height: 90vh; }
+    #brigadas-lista {
+      background: #f8f9fa;
+      padding: 10px;
+      max-height: 90vh;
+      overflow-y: auto;
+      border-left: 2px solid #ccc;
+    }
+    ul { padding-left: 15px; }
+    li { margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+  <h2>📱 Rastreo de Brigadas – InsightPy</h2>
+  <div style="display:flex">
+    <div id="map" style="flex: 3"></div>
+    <div id="brigadas-lista" style="flex: 1">
+      <h4>Brigadas conectadas:</h4>
+      <ul id="lista-brigadas"></ul>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    const map = L.map('map').setView([-12.04, -77.03], 12);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; Leaflet | OpenStreetMap',
+    }).addTo(map);
+
+    fetch('/api/ubicaciones')
+      .then(response => response.json())
+      .then(data => {
+        const lista = document.getElementById('lista-brigadas');
+        lista.innerHTML = '';
+
+        data.forEach(item => {
+          const { usuario, telefono, latitud, longitud, timestamp } = item;
+
+          if (!latitud || !longitud) return;
+
+          L.marker([latitud, longitud])
+            .addTo(map)
+            .bindPopup(`<b>${usuario || 'Brigada'}</b><br>${telefono}<br><small>${timestamp}</small>`);
+
+          const li = document.createElement('li');
+          li.innerHTML = `<b>${usuario || 'Brigada'}</b> - ${telefono} <br><small>${new Date(timestamp).toLocaleString()}</small>`;
+          lista.appendChild(li);
+        });
+      })
+      .catch(err => {
+        console.error('Error al obtener ubicaciones:', err);
+      });
+  </script>
+</body>
+</html>

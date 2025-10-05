@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Acceso | Plataforma de Monitoreo</title>
+
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+
+  <!-- Estilos del login -->
+  <style>
+    :root{
+      --bg1:#0a2a43; --bg2:#0f4c75; --card:#ffffffee;
+    }
+    body{
+      min-height:100vh;
+      background: radial-gradient(75% 75% at 10% 10%, #12324e 0%, #0a2740 40%, #061a2b 100%),
+                  linear-gradient(135deg, var(--bg1), var(--bg2));
+      color:#0b1a2b;
+    }
+    .login-wrap{
+      min-height:100vh;
+      display:grid;
+      grid-template-columns: 1.25fr 1fr;
+    }
+    .brand-pane{
+      position:relative;
+      background: linear-gradient(160deg, rgba(255,255,255,.07), rgba(255,255,255,.02));
+      backdrop-filter: blur(2px);
+      color:#e9f2ff;
+      overflow:hidden;
+    }
+    .brand-pane .blob{
+      position:absolute; inset:auto -80px -120px auto;
+      width:420px; height:420px; border-radius:50%;
+      background: radial-gradient(circle at 30% 30%, #3ec3ff66, #00e5ff22, transparent 70%);
+      filter: blur(16px);
+      pointer-events:none;
+    }
+    .brand-inner{ max-width:720px; margin-inline:auto; padding:4rem 3rem; }
+    .logo-lg{ height:64px; }
+    .headline{ font-weight:800; letter-spacing:.2px; }
+    .sub{ opacity:.9; }
+
+    .form-pane{
+      display:flex; align-items:center; justify-content:center;
+      padding:2rem 1.25rem;
+    }
+    .glass-card{
+      width:100%; max-width:440px;
+      background:var(--card);
+      backdrop-filter: blur(8px);
+      border-radius:18px;
+      box-shadow: 0 12px 40px rgba(0,0,0,.18);
+      padding:1.5rem;
+    }
+    .btn-sso{
+      border:1px solid #e3e7ef;
+      background:#fff;
+    }
+    .btn-sso:hover{ background:#f8f9fb; }
+    .small-link{ font-size:.9rem; }
+    .divider{
+      display:flex; align-items:center; gap:.75rem; color:#6b7280; font-size:.9rem;
+    }
+    .divider::before, .divider::after{
+      content:""; height:1px; flex:1; background: #e5e7eb;
+    }
+    .footer-copy{
+      position:absolute; bottom:1rem; left:0; right:0; text-align:center; opacity:.7; font-size:.85rem; color:#cfe8ff;
+    }
+
+    @media (max-width: 992px){
+      .login-wrap{ grid-template-columns: 1fr; }
+      .brand-inner{ padding:3rem 1.5rem; text-align:center; }
+      .brand-pane{ min-height: 320px; }
+      .footer-copy{ position:static; margin-top:1.25rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Mensajes flash -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="container position-fixed top-0 start-50 translate-middle-x mt-3" style="z-index:1080;">
+        {% for category, msg in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible shadow-sm fade show" role="alert">
+            {{ msg }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+
+  {% if request.args.get('kicked') == '1' %}
+    <div class="container position-fixed top-0 start-50 translate-middle-x mt-3" style="z-index:1080;">
+      <div class="alert alert-warning alert-dismissible shadow-sm fade show" role="alert">
+        Se inició sesión en otro dispositivo. Esta sesión se cerró.
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+      </div>
+    </div>
+  {% endif %}
+
+
+
+  <main class="login-wrap">
+
+    <!-- Panel de marca (izquierda) -->
+    <section class="brand-pane">
+      <div class="brand-inner">
+        <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo" class="logo-lg mb-4">
+        <h1 class="display-6 headline">Plataforma de Monitoreo</h1>
+        <p class="lead sub mb-4">Inds. SamFidtronics</p>
+
+        <ul class="list-unstyled mt-4 mb-5">
+          <li class="mb-3"><i class="bi bi-shield-lock me-2"></i>Autenticación segura con Argon2/CSRF</li>
+          <li class="mb-3"><i class="bi bi-graph-up-arrow me-2"></i>Visión en tiempo real de las averías</li>
+          <li class="mb-3"><i class="bi bi-people me-2"></i>Roles y permisos por usuario</li>
+        </ul>
+
+        <!-- Ilustración (ingeniero) -->
+        <img
+          src="https://images.unsplash.com/photo-1593642634315-48f5414c3ad9?q=80&w=1200&auto=format&fit=crop"
+          alt="Ilustración ingeniero"
+          class="img-fluid rounded-4 shadow"
+          style="max-height:320px; object-fit:cover;"
+        >
+        <!-- Puedes usar en su lugar una ilustración libre de undraw/storyset:
+             https://undraw.co/illustrations  (ej: 'engineering team')
+             https://storyset.com/engineering  -->
+
+        <div class="blob"></div>
+        <p class="footer-copy">© {{ datetime.utcnow().year }} SamFidtronics — Todos los derechos reservados.</p>
+      </div>
+    </section>
+
+    <!-- Panel del formulario (derecha) -->
+    <section class="form-pane">
+      <div class="glass-card">
+
+        <div class="d-flex align-items-center mb-3">
+          <div class="rounded-circle bg-primary-subtle p-2 me-2">
+            <i class="bi bi-person-lock fs-4 text-primary"></i>
+          </div>
+          <div>
+            <h2 class="h4 mb-0">Acceso seguro</h2>
+            <small class="text-secondary">Usa tu correo corporativo</small>
+          </div>
+        </div>
+
+        <!-- SSO (opcional) -->
+        <div class="d-grid gap-2 mb-3">
+          <a href="{{ url_for('login') }}?provider=google" class="btn btn-sso">
+            <i class="bi bi-google me-2"></i> Entrar con Google
+          </a>
+          <a href="{{ url_for('login') }}?provider=azure" class="btn btn-sso">
+            <i class="bi bi-microsoft me-2"></i> Entrar con Microsoft
+          </a>
+        </div>
+
+        <div class="divider my-3">o</div>
+
+        <!-- Formulario -->
+        <form method="post" action="{{ url_for('login') }}" id="loginForm" novalidate>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+          <div class="mb-3">
+            <label for="email" class="form-label">Correo empresarial</label>
+            <input type="email" class="form-control" id="email" name="email" placeholder="tusuario@empresa.com" required>
+            <div class="invalid-feedback">Ingresa un correo válido.</div>
+          </div>
+
+          <div class="mb-2">
+            <label for="password" class="form-label">Contraseña</label>
+            <div class="input-group">
+              <input type="password" class="form-control" id="password" name="password" minlength="8" required>
+              <button class="btn btn-outline-secondary" type="button" id="togglePwd" aria-label="Mostrar u ocultar">
+                <i class="bi bi-eye"></i>
+              </button>
+            </div>
+            <div class="invalid-feedback">La contraseña es requerida.</div>
+          </div>
+
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" value="1" id="remember" name="remember">
+              <label class="form-check-label" for="remember">Recordarme</label>
+            </div>
+            <a href="#" class="small-link">¿Olvidaste tu contraseña?</a>
+          </div>
+
+          <div class="d-grid">
+            <button class="btn btn-primary" type="submit" id="btnSubmit">
+              <span class="spinner-border spinner-border-sm me-2 d-none" id="btnSpinner"></span>
+              Iniciar sesión
+            </button>
+          </div>
+        </form>
+
+        <hr class="my-4">
+        <p class="text-center text-secondary small mb-0">
+          Acceso restringido. El uso indebido será auditado.
+        </p>
+
+      </div>
+    </section>
+
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Toggle de contraseña
+    const pwd = document.getElementById('password');
+    const toggle = document.getElementById('togglePwd');
+    toggle?.addEventListener('click', () => {
+      const isPwd = pwd.type === 'password';
+      pwd.type = isPwd ? 'text' : 'password';
+      toggle.innerHTML = isPwd ? '<i class="bi bi-eye-slash"></i>' : '<i class="bi bi-eye"></i>';
+      pwd.focus();
+    });
+
+    // Validación y estado de carga
+    const form = document.getElementById('loginForm');
+    const btn = document.getElementById('btnSubmit');
+    const spin = document.getElementById('btnSpinner');
+
+    form?.addEventListener('submit', (e) => {
+      if (!form.checkValidity()) {
+        e.preventDefault(); e.stopPropagation();
+      } else {
+        btn.disabled = true; spin.classList.remove('d-none');
+      }
+      form.classList.add('was-validated');
+    }, false);
+  </script>
+</body>
+</html>

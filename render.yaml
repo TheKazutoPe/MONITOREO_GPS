@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: monitoreo-gps
+    env: python
+    buildCommand: ""
+    startCommand: python brigadas_gps.py
+    envVars:
+      - key: FLASK_ENV
+        value: production

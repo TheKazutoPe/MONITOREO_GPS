@@ -1,0 +1,332 @@
+<!-- Modal Editar Bitácora -->
+<div class="modal fade" id="modalEditar" tabindex="-1" aria-labelledby="modalEditarLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-custom">
+    <div class="modal-content">
+
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="modalEditarLabel">Actualizar Bitácora</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+
+      <form id="formEditar" method="post" autocomplete="off">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-body">
+          <div class="container-fluid">
+            <div class="row g-3">
+
+              <!-- Código (readonly) -->
+              <div class="col-md-2 mb-1">
+                <label><strong>Código</strong></label>
+                <input type="text" class="form-control input-grande" name="editarCodigo" id="editarCodigo" readonly>
+                <small id="mensajeEditar" class="ms-2 align-self-center text-nowrap" style="display:none; color:#d63384; font-weight:600;"></small>
+              </div>
+
+              <!-- Título -->
+              <div class="col-md-10 mb-1">
+                <label>Título</label>
+                <input type="text" class="form-control input-grande" name="editarTitulo" id="editarTitulo" required>
+              </div>
+
+              <!-- Fecha inicial -->
+              <div class="col-md-9 mt-1">
+                <div class="col-md-4">
+                  <label>Fecha Inicial</label>
+                  <input type="date" class="form-control input-grande" name="editarFecha" id="editarFecha">
+                </div>
+                <div class="col-md-8"></div>
+              </div>
+
+              <!-- Tipo Avería / Incidencia / SOT -->
+              <div class="col-md-4 mt-1">
+                <label>Tipo Avería</label>
+                <select class="form-select form-select-sm" name="editarTipoAveria" id="editarTipoAveria" required>
+                  <option value="">Seleccione...</option>
+                  <option value="Correctivo">Correctivo</option>
+                  <option value="Preventivo">Preventivo</option>
+                  <option value="Sinergia">Sinergia</option>
+                </select>
+              </div>
+              <div class="col-md-4 mt-1">
+                <label>Nro Incidencia</label>
+                <input type="text" class="form-control input-grande" name="editarIncidencia" id="editarIncidencia" inputmode="text">
+              </div>
+              <div class="col-md-4 mt-1">
+                <label>Nro SOT</label>
+                <input type="text" class="form-control input-grande" name="editarNrosot" id="editarNrosot" inputmode="numeric">
+              </div>
+
+              <!-- Tipo Site / TAS / CRQ -->
+              <div class="col-md-4 mt-1">
+                <label for="editarTipoSite">Tipo Site/POP</label>
+                <input type="text" class="form-control input-grande" name="editarTipoSite" id="editarTipoSite" list="listaTipoSite_ed">
+                <datalist id="listaTipoSite_ed"></datalist>
+                <small id="TipositeError_ed" class="text-danger" style="display:none;">❌ No se encontró el 'Tipo site' escrito.</small>
+              </div>
+              <div class="col-md-4 mt-1">
+                <label>Nro TAS</label>
+                <input type="text" class="form-control input-grande" name="editarTas" id="editarTas" inputmode="text">
+              </div>
+              <div class="col-md-4 mt-1">
+                <label>Nro CRQ</label>
+                <input type="text" class="form-control input-grande" name="editarCRQ" id="editarCRQ" inputmode="text">
+              </div>
+
+              <!-- Nombre Site / Cliente -->
+              <div class="col-md-4 mt-1">
+                <label>Nombre Site</label>
+                <input type="text" class="form-control input-grande" name="editarSite" id="editarSite" list="listaNombreSite_ed">
+                <datalist id="listaNombreSite_ed"></datalist>
+                <small id="siteError_ed" class="text-danger" style="display:none;">❌ No se encontró el 'Nombre del site' escrito.</small>
+              </div>
+              <div class="col-md-4 mt-1">
+                <label>Nombre Cliente</label>
+                <input type="text" class="form-control input-grande" name="editarCliente" id="editarCliente">
+              </div>
+              <div class="col-md-4 mt-1"></div>
+
+              <!-- Lat/Lon/Distancia -->
+              <div class="col-md-4 mt-1">
+                <label>Latitud</label>
+                <input type="number" step="any" class="form-control input-grande" name="editarLat" id="editarLat" inputmode="decimal">
+              </div>
+              <div class="col-md-4 mt-1">
+                <label>Longitud</label>
+                <input type="number" step="any" class="form-control input-grande" name="editarLong" id="editarLong" inputmode="decimal">
+              </div>
+              <div class="col-md-4 mt-1">
+                <label>Distancia (Km)</label>
+                <input type="number" step="any" class="form-control input-grande" name="editarDistancia" id="editarDistancia" inputmode="decimal">
+              </div>
+
+              <!-- Región/Departamento/Distrito -->
+              <div class="col-md-4 mt-1">
+                <label>Región/Zona</label>
+                <select class="form-select form-select-sm" name="editarRegion" id="editarRegion" required>
+                  <option value="">Seleccione..</option>
+                </select>
+              </div>
+              <div class="col-md-4 mt-1">
+                <label>Departamento</label>
+                <select class="form-select form-select-sm" name="editarDepartamento" id="editarDepartamento" required>
+                  <option value="">Seleccione..</option>
+                </select>
+              </div>
+              <div class="col-md-4 mt-1">
+                <label>Distrito</label>
+                <input type="text" class="form-control input-grande" name="editarDistrito" id="editarDistrito">
+              </div>
+
+              <!-- Red/Brigada/Placa/OTDR/Teléfono -->
+              <div class="col-md-3 mt-1" style="flex: 0 0 22%;">
+                <label>Red 1</label>
+                <select class="form-select form-select-sm" name="editarRed" id="editarRed">
+                  <option value="">Seleccione..</option>
+                </select>
+              </div>
+              <div class="col-md-3 mt-1" style="flex: 0 0 26%;">
+                <label>Brigada</label>
+                <select class="form-select form-select-sm" name="editarBrigada" id="editarBrigada">
+                  <option value="">Seleccione..</option>
+                </select>
+              </div>
+              <div class="col-md-2 mt-1" style="flex: 0 0 15%;">
+                <label>Placa</label>
+                <input type="text" class="form-control input-grande" name="editarPlaca" id="editarPlaca">
+              </div>
+              <div class="col-md-2 mt-1">
+                <label>OTDR</label>
+                <input type="text" class="form-control input-grande" name="editarOTDR" id="editarOTDR">
+              </div>
+              <div class="col-md-3 mt-1" style="flex: 0 0 20%;">
+                <label>Teléfono</label>
+                <input type="number" class="form-control input-grande" name="editarTelf" id="editarTelf" inputmode="tel">
+              </div>
+
+
+              <!-- Brigadas adicionales (solo nombre) -->
+              <div class="col-12 mt-1">
+                <label class="form-label">Brigadas adicionales</label>
+
+                <div class="d-flex align-items-center gap-2 mb-1">
+                  <button type="button" class="btn btn-outline-primary btn-sm" id="editarAddBrig">
+                    + Agregar brigada (máx. 5)
+                  </button>
+                  <small class="text-muted">
+                    Solo la brigada 1 guarda Placa/OTDR/Teléfono. Las brigadas 2–5 guardan solo el nombre.
+                  </small>
+                </div>
+
+                <!-- Aquí se renderizan select(s) dinámicos: editarBrigada2..editarBrigada5 -->
+                <div id="editarBrigadasExtras" class="row g-2"></div>
+              </div>
+
+              <!-- Responsables -->
+              <div class="col-md-4 mt-1">
+                <label>Responsable Cicsa</label>
+                <select class="form-select form-select-sm" name="editarCicsa" id="editarCicsa">
+                  <option value="">Seleccione..</option>
+                </select>
+              </div>
+              <div class="col-md-5 mt-1">
+                <label>Responsable Claro</label>
+                <select class="form-select form-select-sm" name="editarClaro" id="editarClaro">
+                  <option value="">Seleccione..</option>
+                </select>
+              </div>
+
+              <!-- Materiales -->
+              <div class="col-12">
+                <label>Materiales Utilizados</label>
+                <textarea class="form-control" name="editarMaterial" id="editarMaterial" rows="1.5"></textarea>
+              </div>
+
+              <!-- Causa/Consecuencia/Reparación -->
+              <div class="col-md-4 mt-2">
+                <label for="editarCausa">Causa</label>
+                <input type="text" class="form-control input-grande" name="editarCausa" id="editarCausa" list="listaCausas_ed" autocomplete="off">
+                <datalist id="listaCausas_ed"></datalist>
+                <small id="CausaError_ed" class="text-danger" style="display:none;">❌ No se encontró la 'Causa' escrita.</small>
+              </div>
+              <div class="col-md-4 mt-2">
+                <label>Consecuencia</label>
+                <input type="text" class="form-control input-grande" name="editarConsecuencia" id="editarConsecuencia">
+              </div>
+              <div class="col-md-4 mt-2">
+                <label for="editarReparacion">Tipo de Reparación</label>
+                <input type="text" class="form-control input-grande" name="editarReparacion" id="editarReparacion" list="listaReparacion_ed" autocomplete="off">
+                <datalist id="listaReparacion_ed"></datalist>
+                <small id="ReparacionError_ed" class="text-danger" style="display:none;">❌ Escriba correctamente</small>
+              </div>
+
+              <!-- Agregar actualización -->
+              <div class="col-12 mt-3">
+                <label><strong>Agregar actualización</strong></label>
+                <div class="d-flex gap-2">
+                  <input type="date" class="form-control" id="Editar_Fecha_bit" style="width:110px; padding:2px; font-size:.9em;">
+                  <input type="time" class="form-control" id="Editar_Hora_bit" style="width:70px; padding:2px; font-size:.9em;">
+                  <select class="form-control custom-select" id="editar_estado_bit" name="editar_estado_bit" style="width:50px; padding:1px; font-size:.9em;">
+                    <option value="">-</option>
+                    <option value="(01)">(01): Se informa de la Avería,</option><option value="(02)">(02): Brigada en Sitio,</option>
+                    <option value="(03)">(03): Accesos concedidos,</option><option value="(04)">(04): Se realiza medición en corte,</option>
+                    <option value="(05)">(05): Se ubica punto de Avería,</option><option value="(06)">(06): Inicio de fusión de cable,</option>
+                    <option value="(07)">(07): Se solicita la validación del servicio,</option><option value="(08)">(08): Se confirma la validación del servicio,</option>
+                    <option value="(09)">(09): Fin de fusiones,</option><option value="(10)">(10): Se culmina trabajos, brigada procede a retirarse,</option>
+
+
+                  </select>
+                  <!-- último estado para backend -->
+                  <input type="hidden" name="ultimo_estado_ed" id="ultimo_estado_ed">
+                  <input type="hidden" name="ultimo_estado_ed_fecha" id="ultimo_estado_ed_fecha">
+                  <input type="hidden" name="ultimo_estado_ed_hora" id="ultimo_estado_ed_hora">
+
+                  <!-- en modal EDITAR -->
+                  <input type="hidden" name="estados_batch_ed" id="estados_batch_ed">
+
+                  <input type="text" class="form-control flex-grow-1" id="editarLineaTexto" name="editarLineaTexto" placeholder="Texto de actualización">
+                  <button type="button" class="btn btn-secondary" onclick="agregarActualizacion()">➕</button>
+                  
+
+                  
+                  <!-- Botón de emergencia -->
+                  <button
+                    type="button"
+                    class="btn btn-outline-danger btn-sm ms-2"
+                    data-bs-toggle="modal"
+                    data-bs-target="#modalEditarEstados"
+                    id="btnAbrirEditarEstados"
+                    onclick="event.preventDefault(); event.stopPropagation();"
+                    >
+                    ⚡
+                  </button>
+
+
+                </div>
+              </div>
+
+              <!-- Hidden + Bitácora -->
+              <input type="hidden" name="editarBitacoracompleta" id="editarBitacoracompleta" value="">
+              <div class="col-12 mt-2">
+                <label>Bitácora</label>
+                <textarea class="form-control" name="editarBitacora_text" id="editarBitacora_text" rows="3"></textarea>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-success" onclick="guardarEdicion()">Guardar Cambios</button>
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+        </div>
+      </form>
+
+      
+
+    </div>
+  </div>
+</div>
+
+
+
+
+<!-- Modal: Editar Estados (emergencia) -->
+<div class="modal fade" id="modalEditarEstados" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title">Editar horas de estados</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+
+      <form id="formEditarEstados" method="post" autocomplete="off">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-body">
+          <!-- Código a editar -->
+          <div class="mb-2">
+            <label class="form-label"><strong>Código de Bitácora</strong></label>
+            <input type="text" class="form-control" name="codigo_bd" id="ee_codigo" required>
+            <div class="form-text">Ingresa el # de la bitácora (sin #).</div>
+          </div>
+
+          <!-- Botón cargar actuales -->
+          <div class="mb-3">
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="ee_btn_cargar">
+              Cargar tiempos actuales
+            </button>
+          </div>
+
+          <!-- Campos est_01..est_10 -->
+          {% for i in range(1,11) %}
+          <div class="mb-2">
+            <label class="form-label">Estado {{ "%02d"|format(i) }}</label>
+            <input type="datetime-local" class="form-control"
+                   name="est_{{ "%02d"|format(i) }}" id="ee_est_{{ "%02d"|format(i) }}">
+            <button type="button" class="btn btn-outline-danger btn-sm"
+              onclick="borrarEstado('{{ '%02d'|format(i) }}')">🗑️</button> 
+                    
+            <div class="form-text">Deja vacío si no quieres cambiar este estado.</div>
+          </div>
+          {% endfor %}
+            📘 Estados posibles de las averías:<br>
+            (01): Se informa de la Avería<br>
+            (02): Brigada en Sitio<br>
+            (03): Accesos concedidos<br>
+            (04): Se realiza medición en corte<br>
+            (05): Se ubica punto de Avería<br>
+            (06): Inicio de fusión de cable<br>
+            (07): Se solicita la validación del servicio<br>
+            (08): Se confirma la validación del servicio<br>
+            (09): Fin de fusiones<br>
+            (10): Se culmina trabajos, brigada procede a retirarse<br>
+        </div>
+
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-danger">Guardar cambios</button>
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+</div>

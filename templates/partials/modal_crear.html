@@ -1,0 +1,249 @@
+<!-- Modal para crear nueva bitácora -->
+<div class="modal fade" id="modalCrear" tabindex="-1" aria-labelledby="modalCrearLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-custom">
+    <div class="modal-content">
+
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title" id="modalCrearLabel">Nueva Bitácora</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+
+      <form id="formNuevaBitacora" method="POST" action="/crear">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-body">
+          <div class="container-fluid">
+            <div class="row g-3">
+
+              <!-- Código + Generar -->
+              <div class="col-md-2 mb-1">
+                <label>Código</label>
+                <input type="text" class="form-control input-grande mb-1" id="nuevoCodigo" name="nuevoCodigo">
+                <!-- <button class="btn btn-primary btn-sm w-100" type="button" onclick="generarCodigo()">Generar</button> -->
+                <small id="mensajeCodigo" class="ms-2 align-self-center text-nowrap" style="display:none; color:#d63384; font-weight:600;"></small>
+              </div>
+
+              <!-- Título -->
+              <div class="col-md-10 mb-1">
+                <label>Título</label>
+                <input type="text" class="form-control input-grande" name="nuevoTitulo" id="nuevoTitulo" required>
+              </div>
+
+              <!-- Fecha inicial -->
+              <div class="col-md-9 mt-1">
+                <div class="col-md-4">
+                  <label>Fecha Inicial</label>
+                  <input type="date" class="form-control input-grande" name="nuevoFecha" id="nuevoFecha">
+                </div>
+                <div class="col-md-8"></div>
+              </div>
+
+              <!-- Tipo Avería / Incidencia / SOT -->
+              <div class="col-md-4 mt-1">
+                <label>Tipo Avería</label>
+                <select class="form-select form-select-sm" name="nuevoTipoAveria" id="nuevoTipoAveria">
+                  <option value="">Seleccione...</option>
+                  <option value="Correctivo">Correctivo</option>
+                  <option value="Preventivo">Preventivo</option>
+                  <option value="Sinergia">Sinergia</option>
+                </select>
+              </div>
+              <div class="col-md-4 mt-1">
+                <label>Nro Incidencia</label>
+                <input type="text" class="form-control input-grande" name="nuevoIncidencia" id="nuevoIncidencia">
+              </div>
+              <div class="col-md-4 mt-1">
+                <label>Nro SOT</label>
+                <input type="text" class="form-control input-grande" name="nuevoNrosot" id="nuevoNrosot">
+              </div>
+
+              <!-- Tipo Site / TAS / CRQ -->
+              <div class="col-md-4 mt-1">
+                <label for="nuevoTipoSite">Tipo Site/POP</label>
+                <input type="text" class="form-control input-grande" name="nuevoTipoSite" id="nuevoTipoSite" list="listaTipoSite" />
+                <datalist id="listaTipoSite"></datalist>
+                <small id="TipositeError" class="text-danger" style="display:none;">❌ No se encuentró el 'Tipo site' escrito.</small>
+              </div>
+              <div class="col-md-4 mt-1">
+                <label>Nro TAS</label>
+                <input type="text" class="form-control input-grande" name="nuevoTas" id="nuevoTas">
+              </div>
+              <div class="col-md-4 mt-1">
+                <label>Nro CRQ</label>
+                <input type="text" class="form-control input-grande" name="nuevoCRQ" id="nuevoCRQ">
+              </div>
+
+              <!-- Nombre Site / Cliente -->
+              <div class="col-md-4 mt-1">
+                <label>Nombre Site</label>
+                <input type="text" class="form-control input-grande" name="nuevoSite" id="nuevoSite" list="listaNombreSite">
+                <datalist id="listaNombreSite"></datalist>
+                <small id="siteError" class="text-danger" style="display:none;">❌ No se encuentró el 'Nombre del site' escrito.</small>
+              </div>
+              <div class="col-md-4 mt-1">
+                <label>Nombre Cliente</label>
+                <input type="text" class="form-control input-grande" name="nuevoCliente" id="nuevoCliente">
+              </div>
+              <div class="col-md-4 mt-1"></div>
+
+              <!-- Lat/Lon/Distancia -->
+              <div class="col-md-4 mt-1">
+                <label>Latitud</label>
+                <input type="number" class="form-control input-grande" name="nuevoLat" id="nuevoLat">
+              </div>
+              <div class="col-md-4 mt-1">
+                <label>Longitud</label>
+                <input type="number" class="form-control input-grande" name="nuevoLong" id="nuevoLong">
+              </div>
+              <div class="col-md-4 mt-1">
+                <label>Distancia (Km)</label>
+                <input type="number" class="form-control input-grande" name="nuevoDistancia" id="nuevoDistancia">
+              </div>
+
+              <!-- Región/Departamento/Distrito -->
+              <div class="col-md-4 mt-1">
+                <label>Región/Zona</label>
+                <select class="form-select form-select-sm" name="nuevoRegion" id="nuevoRegion">
+                  <option value="">Seleccione..</option>
+                </select>
+              </div>
+              <div class="col-md-4 mt-1">
+                <label>Departamento</label>
+                <select class="form-select form-select-sm" name="nuevoDepartamento" id="nuevoDepartamento">
+                  <option value="">Seleccione..</option>
+                </select>
+              </div>
+              <div class="col-md-4 mt-1">
+                <label>Distrito</label>
+                <input type="text" class="form-control input-grande" name="nuevoDistrito" id="nuevoDistrito">
+              </div>
+
+              <!-- Red/Brigada/Placa/OTDR/Teléfono -->
+              <div class="col-md-3 mt-1" style="flex: 0 0 22%;">
+                <label>Red 1</label>
+                <select class="form-select form-select-sm" name="nuevoRed" id="nuevoRed">
+                  <option value="">Seleccione..</option>
+                </select>
+              </div>
+              <div class="col-md-3 mt-1" style="flex: 0 0 26%;">
+                <label>Brigada</label>
+                <select class="form-select form-select-sm" name="nuevoBrigada" id="nuevoBrigada">
+                  <option value="">Seleccione..</option>
+                </select>
+              </div>
+              <div class="col-md-2 mt-1" style="flex: 0 0 15%;">
+                <label>Placa</label>
+                <input type="text" class="form-control input-grande" name="nuevoPlaca" id="nuevoPlaca">
+              </div>
+              <div class="col-md-2 mt-1">
+                <label>OTDR</label>
+                <input type="text" class="form-control input-grande" name="nuevoOTDR" id="nuevoOTDR">
+              </div>
+              <div class="col-md-3 mt-1" style="flex: 0 0 20%;">
+                <label>Teléfono</label>
+                <input type="number" class="form-control input-grande" name="nuevoTelf" id="nuevoTelf">
+              </div>
+
+              <!-- Brigadas adicionales (solo nombre) -->
+              <div class="col-12 mt-1">
+                <label class="form-label">Brigadas adicionales</label>
+
+                <div class="d-flex align-items-center gap-2 mb-1">
+                  <button type="button" class="btn btn-outline-primary btn-sm" id="nuevoAddBrig">
+                    + Agregar brigada (máx. 5)
+                  </button>
+                  <small class="text-muted">
+                    Solo la brigada 1 guarda Placa/OTDR/Teléfono. Las brigadas 2–5 guardan solo el nombre.
+                  </small>
+                </div>
+
+                <!-- Aquí se renderizan select(s) dinámicos: nuevoBrigada2..nuevoBrigada5 -->
+                <div id="nuevoBrigadasExtras" class="row g-2"></div>
+              </div>
+
+
+
+              <!-- Responsables -->
+              <div class="col-md-4 mt-1">
+                <label>Responsable Cicsa</label>
+                <select class="form-select form-select-sm" name="nuevoCicsa" id="nuevoCicsa">
+                  <option value="">Seleccione..</option>
+                </select>
+              </div>
+              <div class="col-md-5 mt-1">
+                <label>Responsable Claro</label>
+                <select class="form-select form-select-sm" name="nuevoClaro" id="nuevoClaro">
+                  <option value="">Seleccione..</option>
+                </select>
+              </div>
+
+              <!-- Materiales -->
+              <div class="col-12">
+                <label>Materiales Utilizados</label>
+                <textarea class="form-control" name="nuevoMaterial" rows="1.5" id="nuevoMaterial"></textarea>
+              </div>
+
+              <!-- Causa/Consecuencia/Reparación -->
+              <div class="col-md-4 mt-2">
+                <label for="nuevoCausa">Causa</label>
+                <input type="text" class="form-control input-grande" name="nuevoCausa" id="nuevoCausa" list="listaCausas" autocomplete="off">
+                <datalist id="listaCausas"></datalist>
+                <small id="CausaError" class="text-danger" style="display:none;">❌ No se encontró la 'Causa' escrita.</small>
+              </div>
+              <div class="col-md-4 mt-2">
+                <label>Consecuencia</label>
+                <input type="text" class="form-control input-grande" name="nuevoConsecuencia" id="nuevoConsecuencia">
+              </div>
+              <div class="col-md-4 mt-2">
+                <label for="nuevoReparacion">Tipo de Reparación</label>
+                <input type="text" class="form-control input-grande" name="nuevoReparacion" id="nuevoReparacion" list="listaReparacion" autocomplete="off">
+                <datalist id="listaReparacion"></datalist>
+                <small id="ReparacionError" class="text-danger" style="display:none;">❌ Escriba correctamente</small>
+              </div>
+
+              <!-- Agregar actualización -->
+              <div class="col-12 mt-3">
+                <label><strong>Agregar actualización</strong></label>
+                <div class="d-flex gap-2">
+                  <input type="date" class="form-control" id="Fecha_bit" style="width:110px; padding:2px; font-size:.9em;">
+                  <input type="time" class="form-control" id="Hora_bit" style="width:70px; padding:2px; font-size:.9em;">
+                  <select class="form-control custom-select" id="estado_bit" name="estado_bit" style="width:50px; padding:1px; font-size:.9em;">
+                    <option value="">-</option>
+                    <option value="(01)">(01): Se informa de la Avería,</option><option value="(02)">(02): Brigada en Sitio,</option>
+                    <option value="(03)">(03): Accesos concedidos,</option><option value="(04)">(04): Se realiza medición en corte,</option>
+                    <option value="(05)">(05): Se ubica punto de Avería,</option><option value="(06)">(06): Inicio de fusión de cable,</option>
+                    <option value="(07)">(07): Se solicita la validación del servicio,</option><option value="(08)">(08): Se confirma la validación del servicio,</option>
+                    <option value="(09)">(09): Fin de fusiones,</option><option value="(10)">(10): Se culmina trabajos, brigada procede a retirarse,</option>
+                  </select>
+                  <input type="hidden" name="ultimo_estado" id="ultimo_estado">
+                  <input type="hidden" name="ultimo_estado_fecha" id="ultimo_estado_fecha">
+                  <input type="hidden" name="ultimo_estado_hora" id="ultimo_estado_hora">
+
+                  <!-- en modal CREAR -->
+                  <input type="hidden" name="estados_batch" id="estados_batch">
+
+                  <input type="text" class="form-control flex-grow-1" id="nuevaLineaTexto" name="nuevaLineaTexto" placeholder="Texto de actualización">
+                  <button type="button" class="btn btn-secondary" onclick="agregarActualizacion()">➕</button>
+                </div>
+              </div>
+
+              <!-- Hidden + Bitácora -->
+              <input type="hidden" name="bitacoracompleta" id="bitacoracompleta">
+
+              <div class="col-12 mt-2">
+                <label>Bitácora</label>
+                <textarea class="form-control" name="bitacora_text" rows="3"></textarea>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-success" onclick="guardarBitacora()">Guardar Bitácora</button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+</div>

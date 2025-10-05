@@ -1,0 +1,72 @@
+{% extends "layout.html" %}
+{% block title %}Mapa de Averías{% endblock %}
+
+{% block content %}
+
+<div class="d-flex flex-wrap align-items-end gap-2 mb-3">
+  <h1 class="m-0 me-auto">Mapa de Averías</h1>
+
+  <!-- Filtros -->
+  <div class="row g-2 align-items-end">
+    <div class="col-auto">
+      <label class="form-label mb-1">Zona</label>
+      <select id="f_zona" class="form-select form-select-sm">
+        <option value="">Todas</option>
+        {% for z in zonas %}<option value="{{ z }}">{{ z }}</option>{% endfor %}
+      </select>
+    </div>
+
+    <div class="col-auto">
+      <label class="form-label mb-1">Tipo</label>
+      <select id="f_tipo" class="form-select form-select-sm">
+        <option value="">Todos</option>
+        <option value="Correctivo">Correctivo</option>
+        <option value="Preventivo">Preventivo</option>
+        <option value="Sinergia">Sinergia</option>
+      </select>
+    </div>
+
+    <div class="col-auto">
+      <label class="form-label mb-1">Estado (0–10)</label>
+      <div class="d-flex align-items-center gap-2">
+        <input id="f_est_min" type="number" class="form-control form-control-sm" min="0" max="10" value="0" style="width:70px">
+        <span>—</span>
+        <input id="f_est_max" type="number" class="form-control form-control-sm" min="0" max="10" value="10" style="width:70px">
+      </div>
+    </div>
+
+    <div class="col-auto">
+      <button id="btn_apply" class="btn btn-primary btn-sm">Aplicar filtros</button>
+      <button id="btn_reset" class="btn btn-outline-secondary btn-sm">Limpiar</button>
+    </div>
+
+    <div class="col-auto">
+      <button id="btn_loc" class="btn btn-outline-dark btn-sm">
+        <i class="bi bi-geo-alt"></i> Mi ubicación
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Contenedor mapa -->
+<div id="map" class="rounded-3 border" style="height: calc(100vh - 220px); min-height: 460px;"></div>
+
+<!-- Leyenda -->
+<div class="mt-2 small text-muted">
+  <span class="badge bg-danger">0–3</span> crítico ·
+  <span class="badge bg-warning text-dark">4–6</span> medio ·
+  <span class="badge bg-success">7–10</span> ok
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+  <!-- Leaflet + MarkerCluster (CDN) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+
+  <script src="{{ url_for('static', filename='js/mapa.js') }}" defer></script>
+{% endblock %}

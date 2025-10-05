@@ -1,0 +1,214 @@
+{% extends "layout.html" %}
+{% block title %}Soporte IA{% endblock %}
+
+{% block content %}
+<style>
+  .chat-wrap{height:60vh; min-height:380px; overflow:auto; background:#f8f9fa;}
+  .bubble{border-radius:14px; padding:.5rem .75rem; box-shadow:0 1px 2px rgba(0,0,0,.05);}
+  .bubble-user{background:#0d6efd; color:#fff;}
+  .bubble-ia{background:#ffffff; border:1px solid #e9ecef;}
+  .msg-time{font-size:.72rem; color:#6c757d;}
+  .copy-btn{opacity:.6}
+  .copy-btn:hover{opacity:1}
+</style>
+
+<div class="container py-3">
+  <div class="card shadow-sm">
+    <div class="card-header bg-primary text-white d-flex align-items-center justify-content-between">
+      <h5 class="mb-0"><i class="bi bi-robot me-2"></i> Soporte IA</h5>
+      <small id="status">Listo •</small>
+    </div>
+
+    <div class="card-body p-0">
+      <!-- Quick prompts -->
+      <div class="border-bottom p-3 bg-light">
+        <div class="d-flex flex-wrap gap-2">
+          <button class="btn btn-outline-secondary btn-sm quick">Resumen de averías de julio 2025</button>
+          <button class="btn btn-outline-secondary btn-sm quick">Causas por supervisor (agrúpalos)</button>
+          <button class="btn btn-outline-secondary btn-sm quick">Averías FTTH en centro</button>
+          <button class="btn btn-outline-secondary btn-sm quick">SLA y severidad en julio</button>
+        </div>
+      </div>
+
+      <!-- Chat -->
+      <div id="chat-box" class="chat-wrap p-3"></div>
+
+      <!-- KPIs (opcional) -->
+      <div id="kpi-area" class="border-top d-none">
+        <div class="p-3">
+          <div class="row g-2" id="kpi-cards"></div>
+          <a class="text-decoration-none" data-bs-toggle="collapse" href="#statsJsonCollapse">Ver JSON de stats</a>
+          <div class="collapse mt-2" id="statsJsonCollapse">
+            <pre id="stats-json" class="bg-dark text-success p-3 rounded small" style="max-height:240px; overflow:auto;"></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- Input -->
+      <div class="border-top p-3">
+        <div class="input-group">
+          <textarea id="userMessage" class="form-control" rows="1" placeholder="Escribe tu consulta… (Enter=Enviar · Shift+Enter=Salto)"></textarea>
+          <button class="btn btn-success" id="sendBtn">
+            <span class="normal"><i class="bi bi-send"></i> Enviar</span>
+            <span class="loading d-none"><span class="spinner-border spinner-border-sm me-1"></span> Enviando…</span>
+          </button>
+        </div>
+        <div class="form-text mt-1">
+          Requiere <code>&lt;meta name="csrf-token" content="{{ csrf_token() }}"&gt;</code> en <code>layout.html</code>.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = (s, el=document)=>el.querySelector(s);
+const chatBox = $("#chat-box");
+const userInput = $("#userMessage");
+const sendBtn = $("#sendBtn");
+const statusEl = $("#status");
+const kpiArea = $("#kpi-area");
+const kpiCards = $("#kpi-cards");
+const statsJsonEl = $("#stats-json");
+
+// --- helpers ---
+function esc(s){return String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")}
+function now(){return new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}
+function scrollBottom(){ chatBox.scrollTop = chatBox.scrollHeight; }
+function setLoading(v){
+  sendBtn.disabled = v;
+  sendBtn.querySelector(".normal").classList.toggle("d-none", v);
+  sendBtn.querySelector(".loading").classList.toggle("d-none", !v);
+  statusEl.textContent = v ? "Procesando •" : "Listo •";
+}
+function autogrow(el){ el.style.height="auto"; el.style.height=(el.scrollHeight)+"px"; }
+
+// --- render ---
+function renderUser(msg){
+  chatBox.insertAdjacentHTML("beforeend", `
+    <div class="d-flex mb-2 justify-content-end">
+      <div style="max-width:78%;" class="text-end">
+        <div class="bubble bubble-user d-inline-block"><div class="small">${esc(msg)}</div></div>
+        <div class="msg-time">${now()}</div>
+      </div>
+      <div class="ms-2 d-flex align-items-center text-bg-secondary rounded-circle" style="width:28px;height:28px;justify-content:center">
+        <i class="bi bi-person"></i>
+      </div>
+    </div>
+  `);
+  scrollBottom();
+}
+function renderIA(text){
+  const id = "m"+Math.random().toString(36).slice(2,9);
+  const safe = esc(text).replace(/\n/g,"<br>");
+  chatBox.insertAdjacentHTML("beforeend", `
+    <div class="d-flex mb-2">
+      <div class="me-2 d-flex align-items-center text-bg-primary rounded-circle" style="width:28px;height:28px;justify-content:center">
+        <i class="bi bi-robot"></i>
+      </div>
+      <div style="max-width:78%;">
+        <div class="bubble bubble-ia position-relative">
+          <div id="${id}" class="small">${safe}</div>
+          <button class="btn btn-light btn-sm position-absolute top-0 end-0 m-1 py-0 px-2 copy-btn" data-target="${id}" title="Copiar">
+            <i class="bi bi-clipboard"></i>
+          </button>
+        </div>
+        <div class="msg-time">${now()}</div>
+      </div>
+    </div>
+  `);
+  chatBox.querySelector(`.copy-btn[data-target="${id}"]`)?.addEventListener("click", async (e)=>{
+    const el = $("#"+id); const tmp = document.createElement("div"); tmp.innerHTML=el.innerHTML;
+    const plain = (tmp.textContent||"").trim(); await navigator.clipboard.writeText(plain);
+    e.currentTarget.innerHTML = '<i class="bi bi-clipboard-check"></i>';
+    setTimeout(()=>e.currentTarget.innerHTML='<i class="bi bi-clipboard"></i>',1200);
+  });
+  scrollBottom();
+}
+function renderError(msg){
+  chatBox.insertAdjacentHTML("beforeend", `
+    <div class="d-flex mb-2">
+      <div class="me-2 d-flex align-items-center text-bg-danger rounded-circle" style="width:28px;height:28px;justify-content:center">
+        <i class="bi bi-exclamation-triangle"></i>
+      </div>
+      <div style="max-width:78%;">
+        <div class="bubble bubble-ia bubble-err bg-danger text-white">
+          <div class="small"><strong>Error:</strong> ${esc(msg)}</div>
+        </div>
+        <div class="msg-time">${now()}</div>
+      </div>
+    </div>
+  `);
+  scrollBottom();
+}
+function renderKPIs(stats){
+  if(!stats){ kpiArea.classList.add("d-none"); return; }
+  const cards=[];
+  const push=(title,val)=> cards.push(`
+    <div class="col-6 col-md-4 col-lg-2">
+      <div class="kpi-card h-100">
+        <div class="text-muted small">${esc(title)}</div>
+        <div class="fw-bold">${esc(val)}</div>
+      </div>
+    </div>`);
+  if(stats.total_registros!=null) push("Total", stats.total_registros);
+  if(stats?.sla?.mttr_h!=null)   push("MTTR (h)", stats.sla.mttr_h);
+  if(stats?.sla?.cumplimiento_pct!=null) push("Cumpl. SLA (%)", stats.sla.cumplimiento_pct);
+  if(stats?.zona_filtrada && stats.zona_filtrada!=="(todas)") push("Zona", stats.zona_filtrada);
+  if(stats?.red_filtrada && stats.red_filtrada!=="(todas)")   push("Red", stats.red_filtrada);
+  if(stats?.tipo_filtrado && stats.tipo_filtrado!=="Todos")   push("Tipo", stats.tipo_filtrado);
+  kpiCards.innerHTML = cards.join("");
+  kpiArea.classList.toggle("d-none", cards.length===0);
+  // JSON colapsable
+  statsJsonEl.textContent = JSON.stringify(stats, null, 2);
+}
+
+// --- events ---
+userInput.addEventListener("input", ()=>autogrow(userInput));
+userInput.addEventListener("keydown", (e)=>{
+  if(e.key==="Enter" && !e.shiftKey){
+    e.preventDefault(); $("#sendBtn").click();
+  }
+});
+document.querySelectorAll(".quick").forEach(b=>b.addEventListener("click", ()=>{
+  send(b.textContent.trim());
+}));
+
+sendBtn.addEventListener("click", async ()=>{
+  const msg = userInput.value.trim();
+  if(!msg) return;
+  userInput.value = ""; autogrow(userInput);
+  await send(msg);
+});
+
+// --- send ---
+async function send(message){
+  renderUser(message);
+  setLoading(true);
+  const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") || "";
+  try{
+    const res = await fetch("/api/consultar_ia", {
+      method:"POST",
+      headers:{"Content-Type":"application/json", ...(csrf?{"X-CSRFToken":csrf}:{})},
+      body: JSON.stringify({message}),
+      credentials: "include"
+    });
+    const data = await res.json();
+    if(!res.ok){
+      renderError(data?.reply || "Error de servidor");
+    }else{
+      renderIA(data?.reply || "");
+      renderKPIs(data?.stats);
+    }
+  }catch(err){
+    console.error(err);
+    renderError("No se pudo conectar con el servidor.");
+  }finally{
+    setLoading(false);
+  }
+}
+
+// saludo inicial
+renderIA("¡Hola! Soy tu asistente. Escribe una consulta o usa los atajos de arriba.");
+</script>
+{% endblock %}
