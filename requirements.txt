@@ -1,4 +1,5 @@
 Flask
+gunicorn
 python-dotenv
 requests
 supabase
