@@ -24,7 +24,6 @@ TELEGRAM_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 
 # -------------------------
 # Webhook de Telegram
-# -------------------------
 @app.route("/webhook/telegram", methods=["POST"])
 def telegram_webhook():
     data = request.get_json()
@@ -36,15 +35,23 @@ def telegram_webhook():
         username = message.get("from", {}).get("username", "")
         location = message.get("location")
 
+        print("[🆔] ID de Telegram:", user_id)
+
         if location:
-            # Buscar datos del técnico por user_id (Telegram ID, no teléfono)
-            perfil = supabase.table("tecnicos_telegram").select("*").eq("telefono", str(user_id)).execute()
+            # Buscar datos del técnico usando el campo telegram_id (⚠️ AJUSTA si tu tabla usa otro nombre)
+            perfil = supabase.table("tecnicos_telegram") \
+                .select("*") \
+                .eq("telegram_id", str(user_id)) \
+                .execute()
+
             if perfil.data:
                 info = perfil.data[0]
                 tecnico = info.get("tecnico", "")
                 brigada = info.get("brigada", "")
                 contrata = info.get("contrata", "")
+                print(f"[👤] Usuario registrado: {tecnico} / {brigada}")
             else:
+                print("[❌] Usuario NO encontrado en tecnicos_telegram:", user_id)
                 tecnico = brigada = contrata = ""
 
             # Guardar ubicación
@@ -59,7 +66,7 @@ def telegram_webhook():
                 "timestamp": datetime.now(timezone.utc).isoformat()
             }).execute()
 
-            print(f"[+] Ubicación recibida de @{username}: {location['latitude']}, {location['longitude']}")
+            print(f"[📍] Ubicación guardada: {location['latitude']}, {location['longitude']}")
             return jsonify({"ok": True})
 
     except Exception as e:
